@@ -6,9 +6,7 @@
 using namespace cv;
 using namespace std;
 
-
 void FloydSteinberg(Mat& image, int n);
-//vector<uint8_t> getPalette(int n);
 
 
 int main(int argc, char** argv)
