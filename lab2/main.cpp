@@ -31,9 +31,12 @@ int main(int argc, char** argv)
         return -1;
     };
 
-
-
     int n = 1;
+    if (n <= 0 || n >= 8) {
+        cout << "Invalid bits per pixel number for dithering!" << endl;
+        return -1;
+    }
+
     FloydSteinberg(image, n);
     FloydSteinberg(image_g, n);
 
