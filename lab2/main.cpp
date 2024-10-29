@@ -8,9 +8,8 @@ using namespace std;
 
 void FloydSteinberg(Mat& image, int n);
 
-
 int main(int argc, char** argv)
-{   
+{
     unsigned int nBPP;
     nBPP = 8;
     Mat image = imread("cat_test.png", IMREAD_UNCHANGED);
@@ -19,7 +18,7 @@ int main(int argc, char** argv)
     if (image.empty())
     {
         cout << "Error while reading an image" << endl;
-        cin.get(); 
+        cin.get();
         return -1;
     }
 
@@ -31,7 +30,7 @@ int main(int argc, char** argv)
         return -1;
     };
 
-    int n = 1;
+    int n = 7;
     if (n <= 0 || n >= 8) {
         cout << "Invalid bits per pixel number for dithering!" << endl;
         return -1;
@@ -45,60 +44,58 @@ int main(int argc, char** argv)
 }
 
 
+//Вероятно, после 5 что-то бьётся вот здесь
+uchar quantize_pixel(uchar pixel, int n) {
+    int color_count = 1 << n;
+    int step = 255 / (color_count - 1);
+    return static_cast<uchar>(round(static_cast<float>(pixel) / (float)step) * step);
+}
+
 void FloydSteinberg(Mat& image, int n)
 {
     Size sz = image.size();
     int width = sz.width;
     int height = sz.height;
 
-    int type = CV_8U;
     Mat out_img;
 
-
-    if (image.channels() != 1) 
-    { //color img
+    if (image.channels() != 1)
+    { // Color image
         out_img = Mat::zeros(image.size(), image.type());
 
         for (int y = 0; y < height; y++) {
             for (int x = 0; x < width; x++) {
+
                 Vec3b pixel = image.at<Vec3b>(y, x);
                 Vec3b quantized_pixel;
+                int error[3];
                 for (int i = 0; i < 3; i++) {
-                    quantized_pixel[i] = pixel[i] >> (8 - n) << (8 - n);
-                }
-
-
-                Vec3b error;
-                for (int i = 0; i < 3; i++) {
+                    quantized_pixel[i] = quantize_pixel(pixel[i], n);
                     error[i] = pixel[i] - quantized_pixel[i];
                 }
+                out_img.at<Vec3b>(y, x) = quantized_pixel;
+
 
                 if (x < width - 1) {
-                    Vec3b& right_pixel = image.at<Vec3b>(y, x + 1);
                     for (int i = 0; i < 3; i++) {
-                        right_pixel[i] = min(255, max(0, right_pixel[i] + error[i] * 7 / 16));
+                        image.at<Vec3b>(y, x + 1)[i] = min(255, max(0, image.at<Vec3b>(y, x + 1)[i] + error[i] * 7 / 16));
                     }
                 }
-                if (y < height - 1) {
-                    Vec3b& below_pixel = image.at<Vec3b>(y + 1, x);
+                if (y < height - 1) {                   
                     for (int i = 0; i < 3; i++) {
-                        below_pixel[i] = min(255, max(0, below_pixel[i] + error[i] * 5 / 16));
+                        image.at<Vec3b>(y + 1, x)[i] = min(255, max(0, image.at<Vec3b>(y + 1, x)[i] + error[i] * 5 / 16));
                     }
                     if (x < width - 1) {
-                        Vec3b& below_right_pixel = image.at<Vec3b>(y + 1, x + 1);
                         for (int i = 0; i < 3; i++) {
-                            below_right_pixel[i] = min(255,max(0, below_right_pixel[i] + error[i] * 1 / 16));
+                            image.at<Vec3b>(y + 1, x + 1)[i] = min(255, max(0, image.at<Vec3b>(y + 1, x + 1)[i] + error[i] * 1 / 16));
                         }
                     }
                     if (x > 0) {
-                        Vec3b& below_left_pixel = image.at<Vec3b>(y + 1, x - 1);
                         for (int i = 0; i < 3; i++) {
-                            below_left_pixel[i] = min(255, max(0, below_left_pixel[i] + error[i] * 3 / 16));
+                            image.at<Vec3b>(y + 1, x - 1)[i] = min(255, max(0, image.at<Vec3b>(y + 1, x - 1)[i] + error[i] * 3 / 16));
                         }
                     }
                 }
-
-                out_img.at<Vec3b>(y, x) = quantized_pixel;
             }
         }
 
@@ -111,16 +108,18 @@ void FloydSteinberg(Mat& image, int n)
         cout << "Output image saved to " << "\'output_dithering_color.png\'" << endl;
 
     }
-    else 
-    { //grayscale img
+    else
+    { // Grayscale image
         out_img = Mat::zeros(sz, CV_8U);
 
         for (int y = 0; y < height; ++y) {
             for (int x = 0; x < width; ++x) {
 
                 uchar pixel = image.at<uchar>(y, x);
-                uchar quantized_pixel = pixel >> (8 - n) << (8 - n); //квантуем
+                uchar quantized_pixel = quantize_pixel(pixel, n);
                 int error = pixel - quantized_pixel;
+                out_img.at<uchar>(y, x) = quantized_pixel;
+
 
                 if (x < width - 1) {
                     image.at<uchar>(y, x + 1) = min(255, max(0, image.at<uchar>(y, x + 1) + error * 7 / 16));
@@ -134,8 +133,6 @@ void FloydSteinberg(Mat& image, int n)
                         image.at<uchar>(y + 1, x - 1) = min(255, max(0, image.at<uchar>(y + 1, x - 1) + error * 3 / 16));
                     }
                 }
-
-                out_img.at<uchar>(y, x) = quantized_pixel;
             }
         }
 
