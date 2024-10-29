@@ -49,9 +49,8 @@ uchar quantize_pixel(uchar pixel, int n) {
     int color_count = 1 << n;
     int step = 255 / (color_count - 1);
     uchar max_clr = static_cast<uchar>(floor(255 / step) * step);
-    uchar res;
-    if (round(static_cast<float>(pixel) / (float)step) * step >= max_clr) res = 255;  //Отдаю предпочтение цвету наибольшей яркости, а не обрезанному значению
-    else res = static_cast<uchar>(round(static_cast<float>(pixel) / (float)step) * step);
+    uchar res = round(static_cast<float>(pixel) / (float)step) * step;
+    if ((int)res >= max_clr) res = static_cast<uchar>(255);  //Отдаю предпочтение цвету наибольшей яркости, а не обрезанному значению
     return res;
 }
 
