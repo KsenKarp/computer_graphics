@@ -7,6 +7,7 @@ using namespace cv;
 using namespace std;
 
 void FloydSteinberg(Mat& image, int n);
+uchar quantize_pixel(uchar pixel, int n);
 
 int main(int argc, char** argv)
 {
@@ -44,11 +45,14 @@ int main(int argc, char** argv)
 }
 
 
-//Вероятно, после 5 что-то бьётся вот здесь
 uchar quantize_pixel(uchar pixel, int n) {
     int color_count = 1 << n;
     int step = 255 / (color_count - 1);
-    return static_cast<uchar>(round(static_cast<float>(pixel) / (float)step) * step);
+    uchar max_clr = static_cast<uchar>(floor(255 / step) * step);
+    uchar res;
+    if (round(static_cast<float>(pixel) / (float)step) * step >= max_clr) res = 255;  //Отдаю предпочтение цвету наибольшей яркости, а не обрезанному значению
+    else res = static_cast<uchar>(round(static_cast<float>(pixel) / (float)step) * step);
+    return res;
 }
 
 void FloydSteinberg(Mat& image, int n)
