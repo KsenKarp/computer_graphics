@@ -104,9 +104,9 @@ int main(int argc, char** argv)
     fill_polygon(img2, points2, 0x480C8B, false);
     fill_polygon(img3, points3, 0x21918C, false);
 
-    imwrite("square_nzv.png", img1);
-    imwrite("star_nzv.png", img2);
-    imwrite("poly_nzv.png", img3);
+    imwrite("square_nzw.png", img1);
+    imwrite("star_nzw.png", img2);
+    imwrite("poly_nzw.png", img3);
     */
 
     fill_polygon(img1, points1, 0x440154, true);
