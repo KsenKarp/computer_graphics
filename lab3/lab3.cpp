@@ -167,14 +167,13 @@ void draw_polygon(Mat& img, vector<Point> points, int color) {
 }
 
 bool intersect(double x1, double y1, double x2, double y2, double x3, double y3, double x4, double y4) {
-    double denom = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
-    if (denom == 0) {
+    double denominator = (x1 - x2) * (y3 - y4) - (y1 - y2) * (x3 - x4);
+    if (denominator == 0) {
         return false;
     }
     else {
-        // the formulas are taken from here: https://en.wikipedia.org/wiki/Line-line_intersection
-        double t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denom;
-        double u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denom;
+        double t = ((x1 - x3) * (y3 - y4) - (y1 - y3) * (x3 - x4)) / denominator;
+        double u = -((x1 - x2) * (y1 - y3) - (y1 - y2) * (x1 - x3)) / denominator;
         return (t >= 0 && t <= 1 && u >= 0 && u <= 1);
     }
 }
