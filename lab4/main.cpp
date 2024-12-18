@@ -7,7 +7,6 @@
 using namespace cv;
 using namespace std;
 
-
 //from previous lab:
 void set_pixel(Mat& img, int x, int y, int color) {
     int r = color & 0xFF;
@@ -37,34 +36,77 @@ float max_dist(Point P0, Point P1, Point P2, Point P3) {
 Point bezier_points(Point P0, Point P1, Point P2, Point P3, double t);
 void bezier_curve(Mat& img, Point& P0, Point& P1, Point& P2, Point& P3);
 
-
 //task2:
 double polygon_area(const vector<Point>& points);
 bool clockwise(const vector<Point>& points);
 void cyrus_beck_algorithm(Mat& img, Point& p1, Point& p2, const vector<Point>& points);
 
 
+
+//additional task
+void bezier_curve_n(Mat& img, const vector<Point>& controlPoints);
+int factorial(int n) {
+    return (n <= 1) ? 1 : n * factorial(n - 1);
+}
+double bernstein(int n, int i, double t) {
+    return static_cast<double>(factorial(n)) / (factorial(i) * factorial(n - i)) * pow(t, i) * pow(1 - t, n - i);
+}
+float max_dist_n(const vector<Point>& controlPoints) {
+    float maxDistance = 0.0f;
+    for (size_t i = 0; i < controlPoints.size(); ++i) {
+        for (size_t j = i + 1; j < controlPoints.size(); ++j) {
+            float dist = distance(controlPoints[i], controlPoints[j]);
+            if (dist > maxDistance) {
+                maxDistance = dist;
+            }
+        }
+    }
+    return maxDistance;
+}
+
 int main(int argc, char** argv)
 {
-    //task 1
+
     Mat img(500, 500, CV_8UC3, Scalar(255, 255, 255));
 
+    vector<Point> Points1 = {
+        {100, 300},
+        {70, 450},
+        {50, 100},
+        {240, 100}
+    };
+    vector<Point> Points2 = {
+        {250, 250}, 
+        {150, 150}
+    };
+    vector<Point> Points3 = {
+        {70, 450},
+        {100, 300},
+        {400, 200},
+        {250, 250},
+        {50, 100},
+        {240, 100},
+        {150, 150},
+        {250, 200}
+    };
+    
+
+    bezier_curve_n(img, Points1);
+    bezier_curve_n(img, Points2);
+    bezier_curve_n(img, Points3);
+    
+    /*
     Point p1 = { 100, 300 };
     Point p2 = { 70, 450 };
     Point p3 = { 50, 100 };
     Point p4 = { 240, 100 };
-    Point p5 = { 400, 200 };
-    Point p6 = { 250, 250 };
-    Point p7 = { 150, 150 };
-    Point p8 = { 250, 200 };
+    */
 
-    bezier_curve(img, p1, p2, p3, p4);
-    bezier_curve(img, p5, p6, p7, p8);
-    bezier_curve(img, p2, p3, p4, p6);
-
-    imshow("bezier curve", img);
+    //bezier_curve(img, p1, p2, p3, p4);
+    imshow("Bezier Curve", img);
     waitKey(0);
-    imwrite("bezier.png", img);
+    imwrite("bezier_n.png", img);
+
 
     //task 2
     /*
@@ -223,18 +265,45 @@ void bezier_curve(Mat& img, Point& P0, Point& P1, Point& P2, Point& P3) {
     float H = max_dist(P0, P1, P2, P3);
     int N = 1 + static_cast<int>(sqrt(3 * H));
 
-    vector<Point> curvePoints;
-    for (int i = 0; i <= N; ++i) {
+    Point prevPoint = P0; // Start with the first point
+    for (int i = 1; i <= N; ++i) {
         float t = static_cast<float>(i) / N;
         Point point = bezier_points(P0, P1, P2, P3, t);
-        curvePoints.push_back(point);
+        draw_line(img, prevPoint.x, prevPoint.y, point.x, point.y, 0xB4A7D6); // Draw line to the current point
+        prevPoint = point; // Update the previous point
     }
 
-    for (size_t i = 1; i < curvePoints.size(); ++i) {
-        draw_line(img, curvePoints[i - 1].x, curvePoints[i - 1].y, curvePoints[i].x, curvePoints[i].y, 0xB4A7D6);
-    }
-
+    // Draw the control points
     for (auto& point : { P0, P1, P2, P3 }) {
+        draw_line(img, point.x - 3, point.y, point.x + 3, point.y, 0x000000);
+        draw_line(img, point.x, point.y - 3, point.x, point.y + 3, 0x000000);
+    }
+}
+
+void bezier_curve_n(Mat& img, const vector<Point>& controlPoints) {
+    if (controlPoints.size() < 2) {
+        cout << "not enough points!" << endl;
+        return;
+    }
+    int n = controlPoints.size() - 1;
+    float H = max_dist_n(controlPoints);
+    int N = 1 + static_cast<int>(sqrt(3 * H));
+
+    Point prevPoint = controlPoints[0]; //start with the first control point
+    for (int i = 1; i <= N; ++i) {
+        float t = static_cast<float>(i) / N;
+        Point point(0, 0);
+
+        for (int j = 0; j <= n; ++j) {
+            double b = bernstein(n, j, t);
+            point += b * controlPoints[j];
+        }
+
+        draw_line(img, prevPoint.x, prevPoint.y, point.x, point.y, 0xB4A7D6);
+        prevPoint = point;
+    }
+
+    for (const auto& point : controlPoints) {
         draw_line(img, point.x - 3, point.y, point.x + 3, point.y, 0x000000);
         draw_line(img, point.x, point.y - 3, point.x, point.y + 3, 0x000000);
     }
